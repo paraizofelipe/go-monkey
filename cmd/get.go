@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
@@ -35,7 +33,8 @@ var getCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		service := publishedCmds[args[0]].(Service)
-		fmt.Println(service.ListInfo())
+		svc := service.ListInfo()
+		service.InfoToTable(svc)
 	},
 }
 
