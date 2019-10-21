@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"strings"
 	"text/tabwriter"
 
 	"github.com/spf13/viper"
@@ -18,7 +17,7 @@ import (
 )
 
 const (
-	endpoint = "/services"
+	serviceEndpoint = "/services"
 )
 
 type Service struct {
@@ -41,7 +40,7 @@ type RespService struct {
 	Data []Service   `json:"data"`
 }
 
-func (ks *Service) InfoToTable(svc []Service) {
+func (s *Service) ShowTable() {
 	w := new(tabwriter.Writer)
 	w.Init(os.Stdout, 0, 8, 0, '\t', 0)
 	header := fmt.Sprintf("%s\t%s\t%s", "ID", "HOST", "NAME")
@@ -51,9 +50,8 @@ func (ks *Service) InfoToTable(svc []Service) {
 		log.Fatal(err)
 	}
 
-	for _, s := range svc {
-		idShards := strings.Split(s.ID, "-")
-		body := fmt.Sprintf("%s\t%s\t%s", idShards[len(idShards)-1], s.Host, s.Name)
+	for _, svc := range s.ListInfo() {
+		body := fmt.Sprintf("%s\t%s\t%s", IdToShortId(svc.ID), svc.Host, svc.Name)
 		if _, err := fmt.Fprintln(w, body); err != nil {
 			log.Fatal(err)
 		}
@@ -64,14 +62,14 @@ func (ks *Service) InfoToTable(svc []Service) {
 	}
 }
 
-func (ks *Service) ListInfo() []Service {
+func (s *Service) ListInfo() []Service {
 	configKong := viper.Get("kong.host").([]interface{})
 	kongUrl := configKong[0].(map[string]interface{})["url"].(string)
 	u, err := url.Parse(kongUrl)
 	if err != nil {
 		log.Fatal("Base URL invalid")
 	}
-	u.Path = path.Join(u.Path, endpoint)
+	u.Path = path.Join(u.Path, serviceEndpoint)
 
 	resp, err := http.Get(u.String())
 	if err != nil || resp.StatusCode != 200 {
