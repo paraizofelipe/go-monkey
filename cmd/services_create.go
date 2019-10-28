@@ -1,21 +1,18 @@
 package cmd
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
-	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"net/url"
-	"os"
 	"strconv"
+
+	"github.com/paraizofelipe/go-monkey/api"
+	"github.com/spf13/viper"
 
 	"github.com/spf13/cobra"
 )
 
-var sc Service
+var sc api.Service
 
 var createCmd = &cobra.Command{
 	Use:   "create [OPTIONS]",
@@ -43,31 +40,15 @@ var createCmd = &cobra.Command{
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		createService(sc)
+		configKong := viper.Get("kong.host").([]interface{})
+		baseUrl := configKong[0].(map[string]interface{})["url"].(string)
+
+		a := api.New(baseUrl)
+		err := a.CreateServices(sc)
+		if err != nil {
+			log.Fatal(err)
+		}
 	},
-}
-
-func createService(service Service) {
-	requestBody, err := json.Marshal(service)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	serviceUrl := fmt.Sprintf("%s/services", os.Getenv("KONG_URL"))
-
-	resp, err := http.Post(serviceUrl, "application/json", bytes.NewBuffer(requestBody))
-	if err != nil || resp.StatusCode != 201 {
-		log.Fatalln(err)
-	}
-
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	fmt.Println(string(body))
 }
 
 func init() {
