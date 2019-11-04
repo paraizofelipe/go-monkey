@@ -7,8 +7,6 @@ import (
 	"strconv"
 
 	"github.com/paraizofelipe/go-monkey/api"
-	"github.com/spf13/viper"
-
 	"github.com/spf13/cobra"
 )
 
@@ -40,11 +38,7 @@ var createCmd = &cobra.Command{
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		configKong := viper.Get("kong.host").([]interface{})
-		baseUrl := configKong[0].(map[string]interface{})["url"].(string)
-
-		a := api.New(baseUrl)
-		err := a.CreateServices(sc)
+		err := kong.CreateServices(sc)
 		if err != nil {
 			log.Fatal(err)
 		}

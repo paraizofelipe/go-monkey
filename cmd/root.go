@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/paraizofelipe/go-monkey/api"
+
 	"github.com/spf13/cobra"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -26,6 +28,7 @@ import (
 )
 
 var cfgFile string
+var kong *api.Api
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -89,4 +92,9 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
+
+	configKong := viper.Get("kong.host").([]interface{})
+	baseUrl := configKong[0].(map[string]interface{})["url"].(string)
+
+	kong = api.New(baseUrl)
 }

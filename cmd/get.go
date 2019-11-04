@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -9,38 +10,59 @@ import (
 	"text/tabwriter"
 
 	"github.com/paraizofelipe/go-monkey/api"
-	"github.com/spf13/viper"
 
 	"github.com/spf13/cobra"
 )
-
-var a *api.Api
 
 func IdToShortId(id string) string {
 	idShards := strings.Split(id, "-")
 	return idShards[len(idShards)-1]
 }
 
-func ShowTable() {
-	w := new(tabwriter.Writer)
-	w.Init(os.Stdout, 0, 8, 0, '\t', 0)
-	header := fmt.Sprintf("%s\t%s\t%s", "ID", "HOST", "NAME")
+func StructToRow(s interface{}) (error, []string) {
+	var rows []string
+	var inInterface map[string]interface{}
 
-	_, err := fmt.Fprintln(w, header)
-	if err != nil {
-		log.Fatal(err)
+	inrec, _ := json.Marshal(s)
+	if err := json.Unmarshal(inrec, &inInterface); err != nil {
+		return err, nil
 	}
 
-	for _, svc := range s.ListInfo() {
-		body := fmt.Sprintf("%s\t%s\t%s", IdToShortId(svc.ID), svc.Host, svc.Name)
-		if _, err := fmt.Fprintln(w, body); err != nil {
-			log.Fatal(err)
-		}
+	for v := range inInterface {
+		rows = append(rows, v)
+	}
+
+	return nil, rows
+}
+
+func Show(data []api.Entity) {
+	fmt.Println(data[0].GetValue("Host"))
+}
+
+func ShowTable(title []string, data []api.Entity) error {
+	var header string
+	var body string
+
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	for _, h := range title {
+		header += fmt.Sprintf("%s\t", h)
+	}
+	if _, err := fmt.Fprintln(w, header); err != nil {
+		return err
+	}
+
+	for index, elem := range data {
+		body += fmt.Sprintf("%s\t", elem.GetValue(title[index]))
+	}
+	if _, err := fmt.Fprintln(w, body); err != nil {
+		return err
 	}
 
 	if err := w.Flush(); err != nil {
 		log.Fatal(err)
 	}
+
+	return nil
 }
 
 var getCmd = &cobra.Command{
@@ -52,27 +74,33 @@ var getCmd = &cobra.Command{
 			return errors.New("Invalid args")
 		}
 
-		if _, ok := a.EndPoints[args[0]]; !ok {
+		if _, ok := kong.EndPoints[args[0]]; !ok {
 			return errors.New("Invalid args")
 		}
 
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		configKong := viper.Get("kong.host").([]interface{})
-		baseUrl := configKong[0].(map[string]interface{})["url"].(string)
-
-		a = api.New(baseUrl)
-		if args[0] == "service" {
-			err, services := a.ListServices()
+		if args[0] == "services" {
+			err, services := kong.ListServices()
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println(services)
+
+			ss := make([]api.Entity, len(services))
+			for i, v := range services {
+				ss[i] = &v
+			}
+
+			header := []string{"ID", "NAME", "PROTOCOL", "PORT"}
+			err = ShowTable(header, ss)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 
 		if args[0] == "routes" {
-			err, routes := a.ListRoutes()
+			err, routes := kong.ListRoutes()
 			if err != nil {
 				log.Fatal(err)
 			}

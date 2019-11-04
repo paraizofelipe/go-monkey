@@ -1,6 +1,9 @@
 package api
 
 import (
+	"reflect"
+	"strings"
+
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -8,7 +11,7 @@ type Service struct {
 	Host           string      `json:"host,omitempty"`
 	CreatedAt      int64       `json:"created_at,omitempty"`
 	ConnectTimeout int64       `json:"connect_timeout,omitempty"`
-	ID             string      `json:"id,omitempty"`
+	Id             string      `json:"id,omitempty"`
 	Protocol       string      `json:"protocol,omitempty"`
 	Name           string      `json:"name,omitempty"`
 	ReadTimeout    int64       `json:"read_timeout,omitempty"`
@@ -24,6 +27,13 @@ type RespService struct {
 	Data []Service   `json:"data"`
 }
 
+func (s *Service) GetValue(key string) interface{} {
+	r := reflect.ValueOf(s)
+	k := strings.Title(strings.ToLower(key))
+	f := reflect.Indirect(r).FieldByName(k)
+	return f
+}
+
 func (a *Api) CreateServices(service Service) error {
 	if err := a.CreateEntity(service, "services"); err != nil {
 		return err
@@ -32,7 +42,7 @@ func (a *Api) CreateServices(service Service) error {
 	return nil
 }
 
-func (a *Api) ListServices() (error, *[]Service) {
+func (a *Api) ListServices() (error, []Service) {
 	var err error
 
 	err, svc := a.ListEntity("services")
@@ -47,5 +57,5 @@ func (a *Api) ListServices() (error, *[]Service) {
 		return err, nil
 	}
 
-	return nil, &services
+	return nil, services
 }
