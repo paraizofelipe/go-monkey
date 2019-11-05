@@ -1,9 +1,15 @@
 package api
 
-import "github.com/mitchellh/mapstructure"
+import (
+	"encoding/json"
+	"reflect"
+	"strings"
+
+	"github.com/mitchellh/mapstructure"
+)
 
 type Route struct {
-	ID                      string              `json:"id,omitempty"`
+	Id                      string              `json:"id,omitempty"`
 	CreatedAt               int64               `json:"create_at,omitempty"`
 	UpdateAt                int64               `json:"update_at,omitempty"`
 	Name                    string              `json:"name,omitempty"`
@@ -25,6 +31,29 @@ type RespRoute struct {
 	Data []Route     `json:"data"`
 }
 
+func (r *Route) GetValue(key string) interface{} {
+	rt := reflect.ValueOf(r)
+	k := strings.Title(strings.ToLower(key))
+	f := reflect.Indirect(rt).FieldByName(k)
+	return f
+}
+
+func (r *Route) ToMap() (error, map[string]interface{}) {
+	b, err := json.Marshal(r)
+	if err != nil {
+		return err, nil
+	}
+
+	var ms map[string]interface{}
+	if err := json.Unmarshal(b, &ms); err != nil {
+		return err, nil
+	}
+
+	ms["service"] = ms["service"].(map[string]interface{})["id"]
+
+	return nil, ms
+}
+
 func (a *Api) CreateRoute(route Route) error {
 	if err := a.CreateEntity(route, "routes"); err != nil {
 		return err
@@ -33,7 +62,7 @@ func (a *Api) CreateRoute(route Route) error {
 	return nil
 }
 
-func (a *Api) ListRoutes() (error, *[]Route) {
+func (a *Api) ListRoutes() (error, []Route) {
 	var err error
 
 	err, svc := a.ListEntity("routes")
@@ -48,5 +77,5 @@ func (a *Api) ListRoutes() (error, *[]Route) {
 		return err, nil
 	}
 
-	return nil, &routes
+	return nil, routes
 }

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -14,29 +13,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type Table struct {
+	Header []string
+	Body   [][]string
+}
+
 func IdToShortId(id string) string {
 	idShards := strings.Split(id, "-")
 	return idShards[len(idShards)-1]
-}
-
-func StructToRow(s interface{}) (error, []string) {
-	var rows []string
-	var inInterface map[string]interface{}
-
-	inrec, _ := json.Marshal(s)
-	if err := json.Unmarshal(inrec, &inInterface); err != nil {
-		return err, nil
-	}
-
-	for v := range inInterface {
-		rows = append(rows, v)
-	}
-
-	return nil, rows
-}
-
-func Show(data []api.Entity) {
-	fmt.Println(data[0].GetValue("Host"))
 }
 
 func ShowTable(title []string, data []api.Entity) error {
@@ -51,11 +35,14 @@ func ShowTable(title []string, data []api.Entity) error {
 		return err
 	}
 
-	for index, elem := range data {
-		body += fmt.Sprintf("%s\t", elem.GetValue(title[index]))
-	}
-	if _, err := fmt.Fprintln(w, body); err != nil {
-		return err
+	for _, elem := range data {
+		for _, h := range title {
+			body += fmt.Sprintf("%v\t", elem.GetValue(h))
+		}
+		if _, err := fmt.Fprintln(w, body); err != nil {
+			return err
+		}
+		body = ""
 	}
 
 	if err := w.Flush(); err != nil {
@@ -88,8 +75,8 @@ var getCmd = &cobra.Command{
 			}
 
 			ss := make([]api.Entity, len(services))
-			for i, v := range services {
-				ss[i] = &v
+			for index, _ := range services {
+				ss[index] = &services[index]
 			}
 
 			header := []string{"ID", "NAME", "PROTOCOL", "PORT"}
@@ -104,7 +91,23 @@ var getCmd = &cobra.Command{
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println(routes)
+
+			//err, r := routes[0].ToMap()
+			//if err != nil {
+			//	log.Fatal(err)
+			//}
+			//fmt.Println(r)
+
+			rts := make([]api.Entity, len(routes))
+			for index, _ := range routes {
+				rts[index] = &routes[index]
+			}
+
+			header := []string{"ID", "SERVICE", "NAME", "PROTOCOLS", "METHODS", "PATHS"}
+			err = ShowTable(header, rts)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 	},
 }
