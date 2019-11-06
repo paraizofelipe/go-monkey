@@ -23,7 +23,7 @@ type Route struct {
 	StripPath               bool                `json:"strip_path,omitempty"`
 	PreserveHost            bool                `json:"preserve_host,omitempty"`
 	Tags                    string              `json:"tags,omitempty"`
-	Service                 map[string]string   `json:"service,omitempty"`
+	Service                 Service             `json:"service,omitempty"`
 }
 
 type RespRoute struct {
@@ -49,32 +49,53 @@ func (r *Route) ToMap() (error, map[string]interface{}) {
 		return err, nil
 	}
 
-	ms["service"] = ms["service"].(map[string]interface{})["id"]
-
 	return nil, ms
 }
 
 func (a *Api) CreateRoute(route Route) error {
-	if err := a.CreateEntity(route, "routes"); err != nil {
+	if err := a.CreateEntity(&route, "routes"); err != nil {
 		return err
 	}
 
 	return nil
 }
 
+func (a *Api) GetRoute(id string) (error, Route) {
+	var err error
+	var route Route
+
+	err, svc := a.GetEntity("routes", id)
+	if err != nil {
+		return err, route
+	}
+
+	err = mapstructure.Decode(svc, &route)
+	if err != nil {
+		return err, route
+	}
+
+	return nil, route
+}
+
 func (a *Api) ListRoutes() (error, []Route) {
 	var err error
 
-	err, svc := a.ListEntity("routes")
+	err, rts := a.ListEntity("routes")
 	if err != nil {
 		return err, nil
 	}
 
 	var routes []Route
-
-	err = mapstructure.Decode(svc, &routes)
+	err = mapstructure.Decode(rts, &routes)
 	if err != nil {
 		return err, nil
+	}
+
+	for index := 0; index < len(routes); index++ {
+		err, routes[index].Service = a.GetService(routes[index].Service.Id)
+		if err != nil {
+			return err, nil
+		}
 	}
 
 	return nil, routes

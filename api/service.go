@@ -35,11 +35,28 @@ func (s *Service) GetValue(key string) interface{} {
 }
 
 func (a *Api) CreateServices(service Service) error {
-	if err := a.CreateEntity(service, "services"); err != nil {
+	if err := a.CreateEntity(&service, "services"); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (a *Api) GetService(id string) (error, Service) {
+	var err error
+	var service Service
+
+	err, svc := a.GetEntity("services", id)
+	if err != nil {
+		return err, service
+	}
+
+	err = mapstructure.Decode(svc, &service)
+	if err != nil {
+		return err, service
+	}
+
+	return nil, service
 }
 
 func (a *Api) ListServices() (error, []Service) {

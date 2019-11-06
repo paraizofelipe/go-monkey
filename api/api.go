@@ -21,6 +21,11 @@ var paths = map[string]string{
 	"routes":   "/routes",
 }
 
+type RespEntity struct {
+	Next interface{} `json:"next"`
+	Data []Entity    `json:"data"`
+}
+
 func New(baseUrl string) *Api {
 	return &Api{
 		BaseUrl:   baseUrl,
@@ -28,10 +33,7 @@ func New(baseUrl string) *Api {
 	}
 }
 
-func (a *Api) MakeRequests(method string, url string, body io.Reader) (error, map[string]interface{}) {
-	//configKong := viper.Get("kong.host").([]interface{})
-	//baseUrl := configKong[0].(map[string]interface{})["url"].(string)
-
+func (a *Api) makeRequests(method string, url string, body io.Reader) (error, map[string]interface{}) {
 	client := http.Client{}
 	request, err := http.NewRequest(method, url, body)
 	if err != nil {
@@ -57,7 +59,7 @@ func (a *Api) MakeRequests(method string, url string, body io.Reader) (error, ma
 	return nil, result
 }
 
-func (a *Api) CreateEntity(entity interface{}, entityName string) error {
+func (a *Api) CreateEntity(entity Entity, entityName string) error {
 	u, err := url.Parse(a.BaseUrl)
 	if err != nil {
 		log.Fatal("Base URL invalid")
@@ -69,21 +71,36 @@ func (a *Api) CreateEntity(entity interface{}, entityName string) error {
 		return err
 	}
 
-	if err, _ = a.MakeRequests("POST", u.String(), bytes.NewBuffer(requestBody)); err != nil {
+	if err, _ = a.makeRequests("POST", u.String(), bytes.NewBuffer(requestBody)); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (a *Api) ListEntity(entity string) (error, []interface{}) {
+func (a *Api) GetEntity(entityName string, id string) (error, interface{}) {
 	u, err := url.Parse(a.BaseUrl)
 	if err != nil {
 		log.Fatal("Base URL invalid")
 	}
-	u.Path = path.Join(u.Path, a.EndPoints[entity])
+	u.Path = path.Join(u.Path, a.EndPoints[entityName], id)
 
-	err, result := a.MakeRequests("GET", u.String(), nil)
+	err, result := a.makeRequests("GET", u.String(), nil)
+	if err != nil {
+		return err, nil
+	}
+
+	return nil, result
+}
+
+func (a *Api) ListEntity(entityName string) (error, []interface{}) {
+	u, err := url.Parse(a.BaseUrl)
+	if err != nil {
+		log.Fatal("Base URL invalid")
+	}
+	u.Path = path.Join(u.Path, a.EndPoints[entityName])
+
+	err, result := a.makeRequests("GET", u.String(), nil)
 	if err != nil {
 		return err, nil
 	}

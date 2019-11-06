@@ -8,8 +8,6 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/paraizofelipe/go-monkey/api"
-
 	"github.com/spf13/cobra"
 )
 
@@ -23,22 +21,21 @@ func IdToShortId(id string) string {
 	return idShards[len(idShards)-1]
 }
 
-func ShowTable(title []string, data []api.Entity) error {
+func ShowTable(table Table) error {
 	var header string
 	var body string
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	for _, h := range title {
+	for _, h := range table.Header {
 		header += fmt.Sprintf("%s\t", h)
 	}
 	if _, err := fmt.Fprintln(w, header); err != nil {
 		return err
 	}
 
-	for _, elem := range data {
-		for _, h := range title {
-			body += fmt.Sprintf("%v\t", elem.GetValue(h))
-		}
+	for _, elem := range table.Body {
+		row := strings.Join(elem, "\t")
+		body += fmt.Sprintf("%s", row)
 		if _, err := fmt.Fprintln(w, body); err != nil {
 			return err
 		}
@@ -74,13 +71,20 @@ var getCmd = &cobra.Command{
 				log.Fatal(err)
 			}
 
-			ss := make([]api.Entity, len(services))
-			for index, _ := range services {
-				ss[index] = &services[index]
+			header := []string{"ID", "NAME", "PROTOCOL", "PORT"}
+			body := make([][]string, len(services))
+			for row, r := range services {
+				body[row] = append(body[row], IdToShortId(r.Id))
+				body[row] = append(body[row], r.Name)
+				body[row] = append(body[row], r.Protocol)
+				body[row] = append(body[row], fmt.Sprintf("%d", r.Port))
 			}
 
-			header := []string{"ID", "NAME", "PROTOCOL", "PORT"}
-			err = ShowTable(header, ss)
+			table := Table{
+				header,
+				body,
+			}
+			err = ShowTable(table)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -92,19 +96,22 @@ var getCmd = &cobra.Command{
 				log.Fatal(err)
 			}
 
-			//err, r := routes[0].ToMap()
-			//if err != nil {
-			//	log.Fatal(err)
-			//}
-			//fmt.Println(r)
-
-			rts := make([]api.Entity, len(routes))
-			for index, _ := range routes {
-				rts[index] = &routes[index]
+			header := []string{"ID", "SERVICE", "NAME", "PROTOCOLS", "METHODS", "PATHS"}
+			body := make([][]string, len(routes))
+			for row, r := range routes {
+				body[row] = append(body[row], IdToShortId(r.Id))
+				body[row] = append(body[row], r.Service.Id)
+				body[row] = append(body[row], r.Name)
+				body[row] = append(body[row], fmt.Sprintf("%s", r.Protocols))
+				body[row] = append(body[row], fmt.Sprintf("%s", r.Methods))
+				body[row] = append(body[row], fmt.Sprintf("%s", r.Paths))
 			}
 
-			header := []string{"ID", "SERVICE", "NAME", "PROTOCOLS", "METHODS", "PATHS"}
-			err = ShowTable(header, rts)
+			table := Table{
+				header,
+				body,
+			}
+			err = ShowTable(table)
 			if err != nil {
 				log.Fatal(err)
 			}
