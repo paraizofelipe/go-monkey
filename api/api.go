@@ -11,19 +11,20 @@ import (
 	"path"
 )
 
+type Entity interface {
+	GetValue(string) interface{}
+	ToMap() (error, map[string]interface{})
+}
+
 type Api struct {
 	BaseUrl   string
 	EndPoints map[string]string
 }
 
 var paths = map[string]string{
-	"services": "/services",
-	"routes":   "/routes",
-}
-
-type RespEntity struct {
-	Next interface{} `json:"next"`
-	Data []Entity    `json:"data"`
+	"services":  "/services",
+	"routes":    "/routes",
+	"consumers": "/consumers",
 }
 
 func New(baseUrl string) *Api {
@@ -59,7 +60,7 @@ func (a *Api) makeRequests(method string, url string, body io.Reader) (error, ma
 	return nil, result
 }
 
-func (a *Api) CreateEntity(entity Entity, entityName string) error {
+func (a *Api) CreateEntity(entity interface{}, entityName string) error {
 	u, err := url.Parse(a.BaseUrl)
 	if err != nil {
 		log.Fatal("Base URL invalid")
@@ -78,12 +79,12 @@ func (a *Api) CreateEntity(entity Entity, entityName string) error {
 	return nil
 }
 
-func (a *Api) GetEntity(entityName string, id string) (error, interface{}) {
+func (a *Api) GetEntity(name string, id string) (error, interface{}) {
 	u, err := url.Parse(a.BaseUrl)
 	if err != nil {
 		log.Fatal("Base URL invalid")
 	}
-	u.Path = path.Join(u.Path, a.EndPoints[entityName], id)
+	u.Path = path.Join(u.Path, a.EndPoints[name], id)
 
 	err, result := a.makeRequests("GET", u.String(), nil)
 	if err != nil {

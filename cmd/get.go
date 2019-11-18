@@ -90,6 +90,31 @@ var getCmd = &cobra.Command{
 			}
 		}
 
+		if args[0] == "consumers" {
+			err, consumers := kong.ListConsumer()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			header := []string{"ID", "USERNAME", "CUSTOM_ID", "TAGS"}
+			body := make([][]string, len(consumers))
+			for row, c := range consumers {
+				body[row] = append(body[row], IdToShortId(c.Id))
+				body[row] = append(body[row], c.Username)
+				body[row] = append(body[row], c.CustomId)
+				body[row] = append(body[row], fmt.Sprintf("%v", c.Tags))
+			}
+
+			table := Table{
+				header,
+				body,
+			}
+			err = ShowTable(table)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+
 		if args[0] == "routes" {
 			err, routes := kong.ListRoutes()
 			if err != nil {

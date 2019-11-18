@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"reflect"
 	"strings"
 
@@ -22,16 +23,25 @@ type Service struct {
 	WriteTimeout   int64       `json:"write_timeout,omitempty"`
 }
 
-type RespService struct {
-	Next interface{} `json:"next"`
-	Data []Service   `json:"data"`
-}
-
 func (s *Service) GetValue(key string) interface{} {
 	r := reflect.ValueOf(s)
 	k := strings.Title(strings.ToLower(key))
 	f := reflect.Indirect(r).FieldByName(k)
 	return f
+}
+
+func (s *Service) ToMap() (error, map[string]interface{}) {
+	b, err := json.Marshal(s)
+	if err != nil {
+		return err, nil
+	}
+
+	var ms map[string]interface{}
+	if err := json.Unmarshal(b, &ms); err != nil {
+		return err, nil
+	}
+
+	return nil, ms
 }
 
 func (a *Api) CreateServices(service Service) error {

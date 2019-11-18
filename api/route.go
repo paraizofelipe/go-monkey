@@ -26,11 +26,6 @@ type Route struct {
 	Service                 Service             `json:"service,omitempty"`
 }
 
-type RespRoute struct {
-	Next interface{} `json:"next"`
-	Data []Route     `json:"data"`
-}
-
 func (r *Route) GetValue(key string) interface{} {
 	rt := reflect.ValueOf(r)
 	k := strings.Title(strings.ToLower(key))
