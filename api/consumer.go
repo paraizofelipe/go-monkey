@@ -45,7 +45,7 @@ func (a *Api) CreateConsumer(consumer Consumer) error {
 	return nil
 }
 
-func (a *Api) GetConsumer(id string) (error, Consumer) {
+func (a *Api) Consumer(id string) (error, Consumer) {
 	var err error
 	var consumer Consumer
 
@@ -62,7 +62,7 @@ func (a *Api) GetConsumer(id string) (error, Consumer) {
 	return nil, consumer
 }
 
-func (a *Api) ListConsumer() (error, []Consumer) {
+func (a *Api) Consumers() (error, []Consumer) {
 	var err error
 
 	err, svc := a.ListEntity("consumers")

@@ -25,7 +25,7 @@ func (s *SuiteService) SetupTest() {
 
 func (s *SuiteService) TestService_List() {
 	api := New("http://localhost:8001")
-	err, services := api.ListServices()
+	err, services := api.Services()
 
 	s.Nil(err)
 	s.IsType(&[]Service{}, services)

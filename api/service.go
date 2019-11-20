@@ -52,7 +52,7 @@ func (a *Api) CreateServices(service Service) error {
 	return nil
 }
 
-func (a *Api) GetService(id string) (error, Service) {
+func (a *Api) Service(id string) (error, Service) {
 	var err error
 	var service Service
 
@@ -69,7 +69,7 @@ func (a *Api) GetService(id string) (error, Service) {
 	return nil, service
 }
 
-func (a *Api) ListServices() (error, []Service) {
+func (a *Api) Services() (error, []Service) {
 	var err error
 
 	err, svc := a.ListEntity("services")

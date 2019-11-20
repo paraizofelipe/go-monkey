@@ -23,7 +23,7 @@ func (s *SuiteRoute) SetupTest() {
 
 func (s *SuiteRoute) TestRoute_List() {
 	api := New("http://localhost:8001")
-	err, routes := api.ListRoutes()
+	err, routes := api.Routes()
 
 	s.Nil(err)
 	s.IsType(&[]Route{}, routes)

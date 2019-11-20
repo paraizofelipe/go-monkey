@@ -9,12 +9,9 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-)
 
-type Entity interface {
-	GetValue(string) interface{}
-	ToMap() (error, map[string]interface{})
-}
+	"github.com/mitchellh/mapstructure"
+)
 
 type Api struct {
 	BaseUrl   string
@@ -25,6 +22,7 @@ var paths = map[string]string{
 	"services":  "/services",
 	"routes":    "/routes",
 	"consumers": "/consumers",
+	"upstreams": "/upstreams",
 }
 
 func New(baseUrl string) *Api {
@@ -92,6 +90,23 @@ func (a *Api) GetEntity(name string, id string) (error, interface{}) {
 	}
 
 	return nil, result
+}
+
+func (a *Api) ParserEntity(name string, id string, v interface{}) error {
+	u, err := url.Parse(a.BaseUrl)
+	if err != nil {
+		log.Fatal("Base URL invalid")
+	}
+	u.Path = path.Join(u.Path, a.EndPoints[name], id)
+
+	err, result := a.makeRequests("GET", u.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	err = mapstructure.Decode(result, &v)
+
+	return nil
 }
 
 func (a *Api) ListEntity(entityName string) (error, []interface{}) {

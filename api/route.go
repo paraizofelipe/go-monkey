@@ -55,7 +55,7 @@ func (a *Api) CreateRoute(route Route) error {
 	return nil
 }
 
-func (a *Api) GetRoute(id string) (error, Route) {
+func (a *Api) Route(id string) (error, Route) {
 	var err error
 	var route Route
 
@@ -69,10 +69,15 @@ func (a *Api) GetRoute(id string) (error, Route) {
 		return err, route
 	}
 
+	err, route.Service = a.Service(route.Service.Id)
+	if err != nil {
+		return err, route
+	}
+
 	return nil, route
 }
 
-func (a *Api) ListRoutes() (error, []Route) {
+func (a *Api) Routes() (error, []Route) {
 	var err error
 
 	err, rts := a.ListEntity("routes")
@@ -87,7 +92,7 @@ func (a *Api) ListRoutes() (error, []Route) {
 	}
 
 	for index := 0; index < len(routes); index++ {
-		err, routes[index].Service = a.GetService(routes[index].Service.Id)
+		err, routes[index].Service = a.Service(routes[index].Service.Id)
 		if err != nil {
 			return err, nil
 		}
