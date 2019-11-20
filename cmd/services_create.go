@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/paraizofelipe/go-monkey/api"
+
 	"github.com/spf13/cobra"
 )
 
