@@ -65,7 +65,7 @@ func (a *Api) Consumer(id string) (error, Consumer) {
 func (a *Api) Consumers() (error, []Consumer) {
 	var err error
 
-	err, svc := a.ListEntity("consumers")
+	err, svc := a.ListEntities("consumers")
 	if err != nil {
 		return err, nil
 	}

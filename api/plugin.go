@@ -91,7 +91,7 @@ func (a *Api) Plugin(id string) (error, Plugin) {
 func (a *Api) Plugins() (error, []Plugin) {
 	var err error
 
-	err, rts := a.ListEntity("plugins")
+	err, rts := a.ListEntities("plugins")
 	if err != nil {
 		return err, nil
 	}

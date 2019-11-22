@@ -80,7 +80,7 @@ func (a *Api) Route(id string) (error, Route) {
 func (a *Api) Routes() (error, []Route) {
 	var err error
 
-	err, rts := a.ListEntity("routes")
+	err, rts := a.ListEntities("routes")
 	if err != nil {
 		return err, nil
 	}

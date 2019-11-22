@@ -106,7 +106,7 @@ func (a *Api) Upstream(id string) (error, Upstream) {
 func (a *Api) Upstreams() (error, []Upstream) {
 	var err error
 
-	err, rts := a.ListEntity("upstreams")
+	err, rts := a.ListEntities("upstreams")
 	if err != nil {
 		return err, nil
 	}

@@ -9,14 +9,24 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-
-	"github.com/mitchellh/mapstructure"
 )
 
 type Api struct {
 	BaseUrl   string
 	EndPoints map[string]string
 }
+
+type Runner interface {
+	Exec()
+}
+
+type ExecHandler func()
+
+type X struct {
+	Runner map[string]Runner
+}
+
+////
 
 var paths = map[string]string{
 	"services":  "/services",
@@ -92,24 +102,7 @@ func (a *Api) GetEntity(name string, id string) (error, interface{}) {
 	return nil, result
 }
 
-func (a *Api) ParserEntity(name string, id string, v interface{}) error {
-	u, err := url.Parse(a.BaseUrl)
-	if err != nil {
-		log.Fatal("Base URL invalid")
-	}
-	u.Path = path.Join(u.Path, a.EndPoints[name], id)
-
-	err, result := a.makeRequests("GET", u.String(), nil)
-	if err != nil {
-		return err
-	}
-
-	err = mapstructure.Decode(result, &v)
-
-	return nil
-}
-
-func (a *Api) ListEntity(entityName string) (error, []interface{}) {
+func (a *Api) ListEntities(entityName string) (error, []interface{}) {
 	u, err := url.Parse(a.BaseUrl)
 	if err != nil {
 		log.Fatal("Base URL invalid")

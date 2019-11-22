@@ -72,7 +72,7 @@ func (a *Api) Service(id string) (error, Service) {
 func (a *Api) Services() (error, []Service) {
 	var err error
 
-	err, svc := a.ListEntity("services")
+	err, svc := a.ListEntities("services")
 	if err != nil {
 		return err, nil
 	}

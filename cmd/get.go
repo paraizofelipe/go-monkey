@@ -8,6 +8,10 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"github.com/mitchellh/mapstructure"
+
+	"github.com/paraizofelipe/go-monkey/api"
+
 	"github.com/spf13/cobra"
 )
 
@@ -32,19 +36,23 @@ var getCmd = &cobra.Command{
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
+		err, entities := kong.ListEntities(args[0])
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		if args[0] == "services" {
-			err, services := kong.Services()
-			if err != nil {
-				log.Fatal(err)
-			}
-
+			var services []api.Service
 			header := []string{"ID", "NAME", "PROTOCOL", "PORT"}
-			body := make([][]string, len(services))
-			for row, r := range services {
-				body[row] = append(body[row], IdToShortId(r.Id))
-				body[row] = append(body[row], r.Name)
-				body[row] = append(body[row], r.Protocol)
-				body[row] = append(body[row], fmt.Sprintf("%d", r.Port))
+			body := make([][]string, len(entities))
+
+			err := mapstructure.Decode(entities, &services)
+
+			for row, s := range services {
+				body[row] = append(body[row], IdToShortId(s.Id))
+				body[row] = append(body[row], s.Name)
+				body[row] = append(body[row], s.Protocol)
+				body[row] = append(body[row], fmt.Sprintf("%d", s.Port))
 			}
 
 			table := Table{
@@ -57,82 +65,107 @@ var getCmd = &cobra.Command{
 			}
 		}
 
-		if args[0] == "consumers" {
-			err, consumers := kong.Consumers()
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			header := []string{"ID", "USERNAME", "CUSTOM_ID", "TAGS"}
-			body := make([][]string, len(consumers))
-			for row, c := range consumers {
-				body[row] = append(body[row], IdToShortId(c.Id))
-				body[row] = append(body[row], c.Username)
-				body[row] = append(body[row], c.CustomId)
-				body[row] = append(body[row], fmt.Sprintf("%v", c.Tags))
-			}
-
-			table := Table{
-				header,
-				body,
-			}
-			err = ShowTable(table)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-
-		if args[0] == "routes" {
-			err, routes := kong.Routes()
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			header := []string{"ID", "SERVICE", "NAME", "PROTOCOLS", "METHODS", "PATHS"}
-			body := make([][]string, len(routes))
-			for row, r := range routes {
-				body[row] = append(body[row], IdToShortId(r.Id))
-				body[row] = append(body[row], r.Service.Id)
-				body[row] = append(body[row], r.Name)
-				body[row] = append(body[row], fmt.Sprintf("%s", r.Protocols))
-				body[row] = append(body[row], fmt.Sprintf("%s", r.Methods))
-				body[row] = append(body[row], fmt.Sprintf("%s", r.Paths))
-			}
-
-			table := Table{
-				header,
-				body,
-			}
-			err = ShowTable(table)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-
-		if args[0] == "upstreams" {
-			err, upstreams := kong.Upstreams()
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			header := []string{"ID", "NAME", "SLOTS", "CREATED"}
-			body := make([][]string, len(upstreams))
-			for row, u := range upstreams {
-				body[row] = append(body[row], IdToShortId(u.Id))
-				body[row] = append(body[row], u.Name)
-				body[row] = append(body[row], fmt.Sprintf("%d", u.Slots))
-				body[row] = append(body[row], fmt.Sprintf("%d", u.CreatedAt))
-			}
-
-			table := Table{
-				header,
-				body,
-			}
-			err = ShowTable(table)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
+		//if args[0] == "services" {
+		//	err, services := kong.Services()
+		//	if err != nil {
+		//		log.Fatal(err)
+		//	}
+		//
+		//	header := []string{"ID", "NAME", "PROTOCOL", "PORT"}
+		//	body := make([][]string, len(services))
+		//	for row, r := range services {
+		//		body[row] = append(body[row], IdToShortId(r.Id))
+		//		body[row] = append(body[row], r.Name)
+		//		body[row] = append(body[row], r.Protocol)
+		//		body[row] = append(body[row], fmt.Sprintf("%d", r.Port))
+		//	}
+		//
+		//	table := Table{
+		//		header,
+		//		body,
+		//	}
+		//	err = ShowTable(table)
+		//	if err != nil {
+		//		log.Fatal(err)
+		//	}
+		//}
+		//
+		//if args[0] == "consumers" {
+		//	err, consumers := kong.Consumers()
+		//	if err != nil {
+		//		log.Fatal(err)
+		//	}
+		//
+		//	header := []string{"ID", "USERNAME", "CUSTOM_ID", "TAGS"}
+		//	body := make([][]string, len(consumers))
+		//	for row, c := range consumers {
+		//		body[row] = append(body[row], IdToShortId(c.Id))
+		//		body[row] = append(body[row], c.Username)
+		//		body[row] = append(body[row], c.CustomId)
+		//		body[row] = append(body[row], fmt.Sprintf("%v", c.Tags))
+		//	}
+		//
+		//	table := Table{
+		//		header,
+		//		body,
+		//	}
+		//	err = ShowTable(table)
+		//	if err != nil {
+		//		log.Fatal(err)
+		//	}
+		//}
+		//
+		//if args[0] == "routes" {
+		//	err, routes := kong.Routes()
+		//	if err != nil {
+		//		log.Fatal(err)
+		//	}
+		//
+		//	header := []string{"ID", "SERVICE", "NAME", "PROTOCOLS", "METHODS", "PATHS"}
+		//	body := make([][]string, len(routes))
+		//	for row, r := range routes {
+		//		body[row] = append(body[row], IdToShortId(r.Id))
+		//		body[row] = append(body[row], r.Service.Id)
+		//		body[row] = append(body[row], r.Name)
+		//		body[row] = append(body[row], fmt.Sprintf("%s", r.Protocols))
+		//		body[row] = append(body[row], fmt.Sprintf("%s", r.Methods))
+		//		body[row] = append(body[row], fmt.Sprintf("%s", r.Paths))
+		//	}
+		//
+		//	table := Table{
+		//		header,
+		//		body,
+		//	}
+		//	err = ShowTable(table)
+		//	if err != nil {
+		//		log.Fatal(err)
+		//	}
+		//}
+		//
+		//if args[0] == "upstreams" {
+		//	err, upstreams := kong.Upstreams()
+		//	if err != nil {
+		//		log.Fatal(err)
+		//	}
+		//
+		//	header := []string{"ID", "NAME", "SLOTS", "CREATED"}
+		//	body := make([][]string, len(upstreams))
+		//	for row, u := range upstreams {
+		//		body[row] = append(body[row], IdToShortId(u.Id))
+		//		body[row] = append(body[row], u.Name)
+		//		body[row] = append(body[row], fmt.Sprintf("%d", u.Slots))
+		//		body[row] = append(body[row], fmt.Sprintf("%d", u.CreatedAt))
+		//	}
+		//
+		//	table := Table{
+		//		header,
+		//		body,
+		//	}
+		//	err = ShowTable(table)
+		//	if err != nil {
+		//		log.Fatal(err)
+		//	}
+		//}
 	},
 }
 
